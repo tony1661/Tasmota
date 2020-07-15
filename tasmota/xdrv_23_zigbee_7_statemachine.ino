@@ -647,11 +647,11 @@ ZBM(ZBR_VERSION, EZSP_version, 0x00, 0x08, 0x02)      // 00000802 - expect v8, p
 
 // general configuration
 // inspired from bellows: https://github.com/zigpy/bellows/blob/dev/bellows/config/ezsp.py
-ZBM(ZBS_SET_ADDR_TABLE,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_KEY_TABLE_SIZE, 0x04, 0x00)                  // 53001E0400
+ZBM(ZBS_SET_ADDR_TABLE,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_KEY_TABLE_SIZE, 0x02, 0x00)                  // 53001E0400
 ZBM(ZBS_SET_MCAST_TABLE,  EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_MULTICAST_TABLE_SIZE, 0x10, 0x00)            // 5300061000
 ZBM(ZBS_SET_STK_PROF,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_STACK_PROFILE, 0x02, 0x00)                   // 53000C0200
 ZBM(ZBS_SET_SEC_LEVEL,    EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SECURITY_LEVEL, 0x05, 0x00)                  // 53000D0500
-ZBM(ZBS_SET_MAX_DEVICES,  EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_MAX_END_DEVICE_CHILDREN, 0x18, 0x00)         // 5300111800
+ZBM(ZBS_SET_MAX_DEVICES,  EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_MAX_END_DEVICE_CHILDREN, 0x20, 0x00)         // 5300111800
 ZBM(ZBS_SET_INDIRECT_TMO, EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 0x00, 0x1E)   // 530012001E
 ZBM(ZBS_SET_TC_CACHE,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 0x02, 0x00) // 5300190200
 ZBM(ZBS_SET_ROUTE_TBL,    EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SOURCE_ROUTE_TABLE_SIZE, 0x10, 0x00)         // 53001A1000
@@ -671,21 +671,21 @@ ZBM(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)   // 000000  - TODO why does 
 // Add Endpoints
 ZBM(ZBS_ADD_ENDPOINT1,    EZSP_addEndpoint, 0x00 /*high*/, 0x01 /*ep*/, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),
                           0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */,
-                          0x0E /* inputClusterCount */,                         // actually all clusters will be received
+                          0x00 /* inputClusterCount */,                         // actually all clusters will be received
                           0X00 /* outputClusterCount */,                        // 02000104010500000000
-                          0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
-                          0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
-                          0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
-                          0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
+                          // 0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
+                          // 0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
+                          // 0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
+                          // 0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
                           )
 ZBM(ZBS_ADD_ENDPOINTB,    EZSP_addEndpoint, 0x00 /*high*/, 0x0B /*ep*/, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),
                           0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */,
-                          0x0E /* inputClusterCount */,                         // actually all clusters will be received
+                          0x00 /* inputClusterCount */,                         // actually all clusters will be received
                           0X00 /* outputClusterCount */,                        // 02000B04010500000000
-                          0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
-                          0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
-                          0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
-                          0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
+                          // 0x00,0x00,  0x04,0x00,  0x05,0x00,  0x06,0x00,      // 0x0000, 0x0004, 0x0005, 0x0006
+                          // 0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
+                          // 0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
+                          // 0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
                           )
 ZBM(ZBR_ADD_ENDPOINT,     EZSP_addEndpoint, 0x00 /*high*/, 0x00 /*ok*/)           // 020000
 
@@ -717,6 +717,8 @@ ZBM(ZBS_SET_POLICY_02,    EZSP_setPolicy, 0x00 /*high*/, EZSP_UNICAST_REPLIES_PO
                           EZSP_HOST_WILL_NOT_SUPPLY_REPLY)    // 55000220
 ZBM(ZBS_SET_POLICY_03,    EZSP_setPolicy, 0x00 /*high*/, EZSP_POLL_HANDLER_POLICY,
                           EZSP_POLL_HANDLER_IGNORE)    // 55000330
+ZBM(ZBS_SET_POLICY_04,    EZSP_setPolicy, 0x00 /*high*/, EZSP_MESSAGE_CONTENTS_IN_CALLBACK_POLICY,
+                          EZSP_MESSAGE_TAG_AND_CONTENTS_IN_CALLBACK)    // 55000441
 ZBM(ZBS_SET_POLICY_05,    EZSP_setPolicy, 0x00 /*high*/, EZSP_TC_KEY_REQUEST_POLICY,
                           EZSP_ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY)    // 55000551
 ZBM(ZBS_SET_POLICY_06,    EZSP_setPolicy, 0x00 /*high*/, EZSP_APP_KEY_REQUEST_POLICY,
@@ -871,6 +873,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_SET_POLICY_00)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
     ZI_SEND(ZBS_SET_POLICY_02)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
     ZI_SEND(ZBS_SET_POLICY_03)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
+    // ZI_SEND(ZBS_SET_POLICY_04)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
     ZI_SEND(ZBS_SET_POLICY_05)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
     ZI_SEND(ZBS_SET_POLICY_06)          ZI_WAIT_RECV(500, ZBR_SET_POLICY_XX)
 

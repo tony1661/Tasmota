@@ -309,7 +309,7 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Version\":\"%d.%d.%d.%d\",\"Protocol\":%d"
                   ",\"Stack\":%d}}"),
-                  ZIGBEE_STATUS_EZ_VERSION, 
+                  ZIGBEE_STATUS_EZ_VERSION,
                   (stack_version & 0xF000) >> 12,
                   (stack_version & 0x0F00) >> 8,
                   (stack_version & 0x00F0) >> 4,
@@ -670,9 +670,17 @@ int32_t ZNP_ReceiveTCDevInd(int32_t res, const class SBuffer &buf) {
 //
 // Handle Bind Rsp incoming message
 //
-int32_t ZNP_BindRsp(int32_t res, const class SBuffer &buf) {
+int32_t Z_BindRsp(int32_t res, const class SBuffer &buf) {
+#ifdef USE_ZIGBEE_ZNP
   Z_ShortAddress    nwkAddr = buf.get16(2);
   uint8_t           status = buf.get8(4);
+  String            msg = getZigbeeStatusMessage(status);
+#endif // USE_ZIGBEE_ZNP
+#ifdef USE_ZIGBEE_EZSP
+  uint8_t           status = buf.get8(0);
+  Z_ShortAddress    nwkAddr = buf.get16(buf.len()-2);   // last 2 bytes
+  String            msg = getZDPStatusMessage(status);
+#endif // USE_ZIGBEE_EZSP
 
   const char * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
 
@@ -682,7 +690,7 @@ int32_t ZNP_BindRsp(int32_t res, const class SBuffer &buf) {
   }
   ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_STATUS "\":%d"
                   ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
-                  "}}"), status, getZigbeeStatusMessage(status).c_str());
+                  "}}"), status, msg.c_str());
 
   MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   XdrvRulesProcess();
@@ -693,9 +701,17 @@ int32_t ZNP_BindRsp(int32_t res, const class SBuffer &buf) {
 //
 // Handle Unbind Rsp incoming message
 //
-int32_t ZNP_UnbindRsp(int32_t res, const class SBuffer &buf) {
+int32_t Z_UnbindRsp(int32_t res, const class SBuffer &buf) {
+#ifdef USE_ZIGBEE_ZNP
   Z_ShortAddress    nwkAddr = buf.get16(2);
   uint8_t           status = buf.get8(4);
+  String            msg = getZigbeeStatusMessage(status);
+#endif // USE_ZIGBEE_ZNP
+#ifdef USE_ZIGBEE_EZSP
+  uint8_t           status = buf.get8(0);
+  Z_ShortAddress    nwkAddr = buf.get16(buf.len()-2);   // last 2 bytes
+  String            msg = getZDPStatusMessage(status);
+#endif // USE_ZIGBEE_EZSP
 
   const char * friendlyName = zigbee_devices.getFriendlyName(nwkAddr);
 
@@ -703,8 +719,9 @@ int32_t ZNP_UnbindRsp(int32_t res, const class SBuffer &buf) {
   if (friendlyName) {
     ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""), friendlyName);
   }
-  ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
-                  "}}"), status, getZigbeeStatusMessage(status).c_str());
+  ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_STATUS "\":%d"
+                  ",\"" D_JSON_ZIGBEE_STATUS_MSG "\":\"%s\""
+                  "}}"), status, msg.c_str());
 
   MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   XdrvRulesProcess();
@@ -714,12 +731,23 @@ int32_t ZNP_UnbindRsp(int32_t res, const class SBuffer &buf) {
 //
 // Handle MgMt Bind Rsp incoming message
 //
-int32_t ZNP_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
+int32_t Z_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
+#ifdef USE_ZIGBEE_ZNP
   uint16_t    shortaddr   = buf.get16(2);
   uint8_t     status      = buf.get8(4);
   uint8_t     bind_total  = buf.get8(5);
   uint8_t     bind_start  = buf.get8(6);
   uint8_t     bind_len    = buf.get8(7);
+  const size_t prefix_len = 8;
+#endif // USE_ZIGBEE_ZNP
+#ifdef USE_ZIGBEE_EZSP
+  uint16_t    shortaddr   = buf.get16(buf.len()-2);
+  uint8_t     status      = buf.get8(0);
+  uint8_t     bind_total  = buf.get8(1);
+  uint8_t     bind_start  = buf.get8(2);
+  uint8_t     bind_len    = buf.get8(3);
+  const size_t prefix_len = 4;
+#endif // USE_ZIGBEE_EZSP
 
   const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
 
@@ -733,7 +761,7 @@ int32_t ZNP_MgmtBindRsp(int32_t res, const class SBuffer &buf) {
                         ",\"Bindings\":["
                         ), status, getZigbeeStatusMessage(status).c_str(), bind_total);
 
-  uint32_t idx = 8;
+  uint32_t idx = prefix_len;
   for (uint32_t i = 0; i < bind_len; i++) {
     if (idx + 14 > buf.len()) { break; }   // overflow, frame size is between 14 and 21
 
@@ -791,7 +819,8 @@ void Z_SendIEEEAddrReq(uint16_t shortaddr) {
   ZigbeeZNPSend(IEEEAddrReq, sizeof(IEEEAddrReq));
 #endif
 #ifdef USE_ZIGBEE_EZSP
-  // TODO
+  uint8_t IEEEAddrReq[] = { Z_B0(shortaddr), Z_B1(shortaddr), 0x00, 0x00 };
+  EZ_SendZDO(shortaddr, ZDO_IEEE_addr_req, IEEEAddrReq, sizeof(IEEEAddrReq));
 #endif
 }
 
@@ -878,7 +907,7 @@ void Z_IncomingMessage(ZCLFrame &zcl_received) {
 
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
-  
+
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
 
@@ -904,6 +933,12 @@ void Z_IncomingMessage(ZCLFrame &zcl_received) {
       msg.reserve(100);
       json.printTo(msg);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":%s}"), srcaddr, msg.c_str());
+    }
+
+    // discard the message if it was sent by us (broadcast or group loopback)
+    if (srcaddr == localShortAddr) {
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE  "loopback message, ignoring"));
+      return;     // abort the rest of message management
     }
 
     zcl_received.postProcessAttributes(srcaddr, json);
@@ -991,25 +1026,31 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
   uint8_t         linkquality = buf.get8(14);
   // uint8_t         linkrsssi = buf.get8(15);     // probably not used as there is no equivalent in Z-Stack
   uint16_t        srcaddr = buf.get16(16);
-  uint8_t         bindingindex = buf.get8(18);      // TODO not sure we need this one as a coordinator
-  uint8_t         addressindex = buf.get8(19);      // TODO not sure how to handle this one
+  // uint8_t         bindingindex = buf.get8(18);      // not sure we need this one as a coordinator
+  // uint8_t         addressindex = buf.get8(19);      // not sure how to handle this one
   // offset 20 is len, and buffer starts at offset 21
 
 
   if ((0x0000 == profileid) && (0x00 == srcendpoint))  {
     // ZDO request
     // Since ZDO messages start with a sequence number, we skip it
-    SBuffer zdo_buf = buf.subBuffer(22, buf.get8(20) - 1);
+    // but we add the source address in the last 2 bytes
+    SBuffer zdo_buf(buf.get8(20) - 1 + 2);
+    zdo_buf.addBuffer(buf.buf(22), buf.get8(20) - 1);
+    zdo_buf.add16(srcaddr);
     switch (clusterid) {
       case ZDO_Device_annce:
         return Z_ReceiveEndDeviceAnnonce(res, zdo_buf);
-        break;
       case ZDO_Active_EP_rsp:
         return Z_ReceiveActiveEp(res, zdo_buf);
-        break;
       case ZDO_IEEE_addr_rsp:
         return Z_ReceiveIEEEAddr(res, zdo_buf);
-        break;
+      case ZDO_Bind_rsp:
+        return Z_BindRsp(res, zdo_buf);
+      case ZDO_Unbind_rsp:
+        return Z_UnbindRsp(res, zdo_buf);
+      case ZDO_Mgmt_Bind_rsp:
+        return Z_MgmtBindRsp(res, zdo_buf);
     }
   } else {
     bool            defer_attributes = false;     // do we defer attributes reporting to coalesce
@@ -1026,9 +1067,19 @@ int32_t EZ_IncomingMessage(int32_t res, const class SBuffer &buf) {
 //
 // Callback for loading Zigbee configuration from Flash, called by the state machine
 //
+// value = 0 : drive reset pin and halt MCU
+// value = 1 : release the reset pin, restart
 int32_t EZ_Reset_Device(uint8_t value) {
-  // TODO - GPIO is hardwired to GPIO4
-  digitalWrite(4, value ? HIGH : LOW);
+  // we use Led4i to drive the reset pin. Since it is reverted we need to pass 1 to start reset, and 0 to release reset
+  if (PinUsed(GPIO_LED1, ZIGBEE_EZSP_RESET_LED - 1)) {
+    SetLedPowerIdx(ZIGBEE_EZSP_RESET_LED - 1, value ? 0 : 1);
+  } else {
+    // no GPIO so we use software Reset instead
+    if (value) {  // send reset only when we are supposed to release reset
+      uint8_t ezsp_reset[1] = { 0xC0 };       // EZSP ASH Reset
+      ZigbeeEZSPSendRaw(ezsp_reset, sizeof(ezsp_reset), true);
+    }
+  }
   return 0;                              // continue
 }
 
@@ -1120,15 +1171,6 @@ int32_t ZNP_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
-//
-// Callback for loading Zigbee configuration from Flash, called by the state machine
-//
-int32_t Z_Reset_Device(uint8_t value) {
-  // TODO - GPIO is hardwired to GPIO4
-  digitalWrite(4, value ? HIGH : LOW);
-  return 0;                              // continue
-}
-
 #endif // USE_ZIGBEE_ZNP
 
 
@@ -1179,9 +1221,9 @@ const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { { Z_AREQ | Z_ZDO, ZDO_NODE_DESC_RSP },          &ZNP_ReceiveNodeDesc },           // 4582
   { { Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP },          &Z_ReceiveActiveEp },             // 4585
   { { Z_AREQ | Z_ZDO, ZDO_IEEE_ADDR_RSP },          &Z_ReceiveIEEEAddr },             // 4581
-  { { Z_AREQ | Z_ZDO, ZDO_BIND_RSP },               &ZNP_BindRsp },                   // 45A1
-  { { Z_AREQ | Z_ZDO, ZDO_UNBIND_RSP },             &ZNP_UnbindRsp },                 // 45A2
-  { { Z_AREQ | Z_ZDO, ZDO_MGMT_BIND_RSP },          &ZNP_MgmtBindRsp },               // 45B3
+  { { Z_AREQ | Z_ZDO, ZDO_BIND_RSP },               &Z_BindRsp },                   // 45A1
+  { { Z_AREQ | Z_ZDO, ZDO_UNBIND_RSP },             &Z_UnbindRsp },                 // 45A2
+  { { Z_AREQ | Z_ZDO, ZDO_MGMT_BIND_RSP },          &Z_MgmtBindRsp },               // 45B3
 };
 
 /*********************************************************************************************\
