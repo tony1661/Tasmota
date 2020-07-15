@@ -52,7 +52,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.3.1.6
+### Version 8.4.0 George
 
 - Change IRremoteESP8266 library from v2.7.6 to v2.7.8
 - Change Adafruit_SGP30 library from v1.0.3 to v1.2.0 (#8519)

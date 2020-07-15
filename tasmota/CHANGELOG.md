@@ -1,3 +1,9 @@
+## Released
+
+### 8.4.0 20200730
+
+- Release George
+
 ## Unreleased (development)
 
 ### 8.3.1.6 20200617
@@ -62,12 +68,6 @@
 - Add dump of compressed rules over 512 chars and unishox decompress fix
 - Add support for VEML6075 UVA/UVB/UVINDEX Sensor by device111 (#8432)
 - Add support for VEML7700 Ambient light intensity Sensor by device111 (#8432)
-
-## Released
-
-### 8.3.1 20200518
-
-- Release Fred
 
 ### 8.3.0.2 20200517
 
